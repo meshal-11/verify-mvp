@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+@theme {
+  /* هوية حراج — من النموذج الأولي */
+  --color-primary: #2e6cb2;
+  --color-primary-dark: #234f86;
+  --color-primary-deep: #1a3c66;
+  --color-gold: #e7b15c;
+  --color-gold-dark: #c98f2f;
+  --color-gold-deep: #8a6a2b;
+  --color-gold-tint: #fdf6e9;
+  --color-green: #34a853;
+  --color-green-dark: #1f7a3d;
+  --color-green-tint: #e8f5ec;
+  --color-danger: #c0392b;
+  --color-danger-tint: #fdecea;
+  --color-ink: #1a1a1a;
+  --color-muted: #6b7280;
+  --color-faint: #9ca3af;
+  --color-line: #e6e8eb;
+  --color-page: #f5f6f8;
+  --color-card: #ffffff;
+
+  --font-sans: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
+
+  --shadow-soft: 0 8px 30px rgba(26, 26, 26, 0.06);
+  --shadow-lift: 0 18px 44px rgba(35, 79, 134, 0.14);
+  --shadow-gold: 0 10px 30px rgba(201, 143, 47, 0.35);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(46, 108, 178, 0.18);
+}
+
+/* شريط تمرير ناعم */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c7cfda transparent;
+}
+
+/* لمعة زر الفحص الذهبي */
+@keyframes shimmer {
+  0% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(-220%);
+  }
+}
+
+.gold-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateX(120%);
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 60%
+  );
+  animation: shimmer 3.2s ease-in-out infinite;
+}
+
+/* نبض المؤشر الحي */
+@keyframes livePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.45);
+  }
+  60% {
+    box-shadow: 0 0 0 7px rgba(52, 168, 83, 0);
+  }
+}
+
+.live-dot {
+  animation: livePulse 2s ease-out infinite;
+}
+
+/* هالة الذكاء الاصطناعي — حد متدرج يدور بهدوء أثناء التحليل */
+@property --ai-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes aiSpin {
+  to {
+    --ai-angle: 360deg;
+  }
+}
+
+.ai-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--ai-angle),
+    rgba(46, 108, 178, 0) 0%,
+    rgba(46, 108, 178, 0.9) 18%,
+    rgba(231, 177, 92, 0.9) 38%,
+    rgba(52, 168, 83, 0.8) 58%,
+    rgba(46, 108, 178, 0) 78%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: aiSpin 2.6s linear infinite;
+  pointer-events: none;
+}
+
+/* مؤشر كتابة وامض للـ placeholder الحي */
+@keyframes caretBlink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.type-caret {
+  animation: caretBlink 0.9s steps(1) infinite;
+}
+
+/* هيكل تحميل لنتائج البحث */
+@keyframes skeletonWave {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.skeleton-wave::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.75) 50%,
+    transparent 70%
+  );
+  animation: skeletonWave 1.8s ease-in-out infinite;
+}
+
+/* احترام تفضيل تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  .gold-shine::after,
+  .live-dot,
+  .ai-ring,
+  .type-caret,
+  .skeleton-wave::after {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
