@@ -164,6 +164,18 @@ export default function SellerChat() {
 
       {/* الرسائل */}
       <div className="flex-1 space-y-3 overflow-y-auto bg-page/60 p-4">
+        {/* تنبيه ثابت — التواصل خارج التطبيق ممنوع (عنصر UI ثابت، منفصل عن حالة الرسائل) */}
+        <div className="mx-auto max-w-md rounded-2xl bg-gold-tint p-4 text-center ring-1 ring-gold/25">
+          <p className="flex items-center justify-center gap-1.5 text-sm font-black text-gold-deep">
+            <ShieldAlert className="size-4" />
+            التواصل خارج التطبيق ممنوع
+          </p>
+          <p className="mt-1 text-xs font-medium leading-relaxed text-gold-deep/80">
+            هذه المحادثة مراقبة من منصة Verify لحماية خصوصية الطرفين وضمان حق
+            البائع والمشتري — أي اتفاق خارجها يُسقط الحماية عنكما.
+          </p>
+        </div>
+
         <p className="text-center text-[11px] font-bold text-faint tabular-nums">
           اليوم 2:14 م
         </p>

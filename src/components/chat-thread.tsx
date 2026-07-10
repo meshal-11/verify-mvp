@@ -5,10 +5,13 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
+  Ban,
   CalendarCheck2,
   CalendarPlus,
   CheckCheck,
+  CircleCheck,
   Clock3,
+  Gavel,
   MapPin,
   SendHorizontal,
   ShieldAlert,
@@ -17,16 +20,20 @@ import InspectionModal from "./inspection-modal";
 
 interface ChatMessage {
   id: number;
-  from: "buyer" | "seller";
-  text: string;
+  kind: "text" | "blocked" | "bid";
+  from?: "buyer" | "seller";
+  text?: string;
   time: string;
   read?: boolean;
+  bidAmount?: number;
+  bidStatus?: "pending" | "accepted" | "declined";
 }
 
 /** محادثة الشاشة 10 حرفياً */
 const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 1,
+    kind: "text",
     from: "buyer",
     text: "ودي أشوف السيارة على الطبيعة قبل ما أقرر الفحص",
     time: "6:02 م",
@@ -34,12 +41,39 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   },
   {
     id: 2,
+    kind: "text",
     from: "seller",
     text: "حياك الله، أنا في النرجس — متى يناسبك؟",
     time: "6:05 م",
   },
-  { id: 3, from: "buyer", text: "الجمعة العصر ممتاز", time: "6:06 م", read: true },
+  {
+    id: 3,
+    kind: "text",
+    from: "buyer",
+    text: "الجمعة العصر ممتاز",
+    time: "6:06 م",
+    read: true,
+  },
 ];
+
+/** يكتشف أرقام جوال سعودية مكتوبة بأي صيغة (مسافات/شرطات/رمز الدولة) */
+function containsPhoneNumber(text: string): boolean {
+  const normalized = text.replace(/[\s-]/g, "");
+  return /(?:\+?9665\d{8}|05\d{8}|5\d{8})/.test(normalized);
+}
+
+/** يكتشف نية السوم: كلمة "سوم" أو رقم كبير ضمن الرسالة */
+function extractBidAmount(text: string): number | null {
+  const numberMatches = text.match(/\d[\d,]*/g);
+  if (!numberMatches) return null;
+  const amounts = numberMatches
+    .map((n) => parseInt(n.replace(/,/g, ""), 10))
+    .filter((n) => !Number.isNaN(n));
+  if (amounts.length === 0) return null;
+  const max = Math.max(...amounts);
+  const hasBidWord = /سوم/.test(text);
+  return hasBidWord || max >= 1000 ? max : null;
+}
 
 /**
  * الشاشة 10 — المحادثة + الشوفة الحرة
@@ -61,6 +95,15 @@ export default function ChatThread() {
     return () => clearTimeout(t);
   }, [reduce]);
 
+  const scrollToBottom = () => {
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: reduce ? "auto" : "smooth",
+      })
+    );
+  };
+
   const send = () => {
     const text = draft.trim();
     if (!text) return;
@@ -68,16 +111,37 @@ export default function ChatThread() {
       hour: "numeric",
       minute: "2-digit",
     });
+
+    if (containsPhoneNumber(text)) {
+      setMessages((m) => [...m, { id: Date.now(), kind: "blocked", time: now }]);
+      setDraft("");
+      scrollToBottom();
+      return;
+    }
+
+    const bidAmount = extractBidAmount(text);
     setMessages((m) => [
       ...m,
-      { id: Date.now(), from: "buyer", text, time: now, read: false },
+      { id: Date.now(), kind: "text", from: "buyer", text, time: now, read: false },
+      ...(bidAmount
+        ? [
+            {
+              id: Date.now() + 1,
+              kind: "bid" as const,
+              time: now,
+              bidAmount,
+              bidStatus: "pending" as const,
+            },
+          ]
+        : []),
     ]);
     setDraft("");
-    requestAnimationFrame(() =>
-      scrollRef.current?.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: reduce ? "auto" : "smooth",
-      })
+    scrollToBottom();
+  };
+
+  const setBidStatus = (id: number, status: "accepted" | "declined") => {
+    setMessages((m) =>
+      m.map((msg) => (msg.id === id ? { ...msg, bidStatus: status } : msg))
     );
   };
 
@@ -114,35 +178,114 @@ export default function ChatThread() {
 
       {/* الرسائل */}
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-page/60 p-4">
-        {messages.map((msg, i) => (
-          <motion.div
-            key={msg.id}
-            {...appear(i < 3 ? 0.2 + i * 0.3 : 0)}
-            className={`flex ${msg.from === "buyer" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-soft ${
-                msg.from === "buyer"
-                  ? "rounded-bl-md bg-gradient-to-l from-primary to-primary-dark text-white"
-                  : "rounded-br-md bg-white text-ink ring-1 ring-line/60"
-              }`}
+        {/* تنبيه ثابت — التواصل خارج التطبيق ممنوع (عنصر UI ثابت، منفصل عن حالة الرسائل) */}
+        <div className="mx-auto max-w-md rounded-2xl bg-gold-tint p-4 text-center ring-1 ring-gold/25">
+          <p className="flex items-center justify-center gap-1.5 text-sm font-black text-gold-deep">
+            <ShieldAlert className="size-4" />
+            التواصل خارج التطبيق ممنوع
+          </p>
+          <p className="mt-1 text-xs font-medium leading-relaxed text-gold-deep/80">
+            هذه المحادثة مراقبة من منصة Verify لحماية خصوصية الطرفين وضمان حق
+            البائع والمشتري — أي اتفاق خارجها يُسقط الحماية عنكما.
+          </p>
+        </div>
+
+        {messages.map((msg, i) => {
+          if (msg.kind === "blocked") {
+            return (
+              <motion.div key={msg.id} {...appear(0)} className="py-1">
+                <div className="mx-auto max-w-md rounded-2xl bg-danger-tint p-4 text-center ring-1 ring-danger/25">
+                  <p className="flex items-center justify-center gap-1.5 text-sm font-black text-danger">
+                    <Ban className="size-4" />
+                    تم حظر هذه الرسالة تلقائياً
+                  </p>
+                  <p className="mt-1.5 text-xs font-medium leading-relaxed text-danger/85">
+                    يُمنع مشاركة أرقام التواصل للحفاظ على أمانك داخل منصة
+                    Verify.
+                  </p>
+                </div>
+              </motion.div>
+            );
+          }
+
+          if (msg.kind === "bid") {
+            return (
+              <motion.div key={msg.id} {...appear(0)} className="py-1">
+                <div className="mx-auto max-w-md rounded-3xl bg-white p-5 ring-2 ring-primary/25 shadow-soft">
+                  <p className="flex items-center justify-center gap-2 text-sm font-black text-primary">
+                    <span className="grid size-7 place-items-center rounded-full bg-primary/10">
+                      <Gavel className="size-4" />
+                    </span>
+                    رصد النظام سومة جديدة
+                  </p>
+                  <p className="mt-2.5 text-center font-bold leading-relaxed text-ink">
+                    سومة بقيمة{" "}
+                    <span className="font-black text-green tabular-nums">
+                      {msg.bidAmount?.toLocaleString("en-US")} ريال
+                    </span>{" "}
+                    — هل تريد اعتمادها وتحديث السومة في الصفحة الرئيسية
+                    للإعلان؟
+                  </p>
+                  {msg.bidStatus === "pending" ? (
+                    <div className="mt-4 grid grid-cols-2 gap-2.5">
+                      <button
+                        onClick={() => setBidStatus(msg.id, "accepted")}
+                        className="min-h-11 cursor-pointer rounded-xl bg-gradient-to-l from-primary to-primary-dark font-extrabold text-white shadow-lift transition-all hover:brightness-110 active:scale-[0.97]"
+                      >
+                        نعم، حدّث السومة
+                      </button>
+                      <button
+                        onClick={() => setBidStatus(msg.id, "declined")}
+                        className="min-h-11 cursor-pointer rounded-xl bg-white font-extrabold text-muted ring-1 ring-line transition-all hover:text-ink hover:ring-primary/40 active:scale-[0.97]"
+                      >
+                        لا
+                      </button>
+                    </div>
+                  ) : msg.bidStatus === "accepted" ? (
+                    <motion.p
+                      initial={reduce ? false : { opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-green-tint px-4 py-3 text-sm font-extrabold text-green-dark ring-1 ring-green/25"
+                    >
+                      <CircleCheck className="size-4 shrink-0" />
+                      تم تحديث أعلى سومة تلقائياً — تظهر الآن في إعلانك
+                    </motion.p>
+                  ) : null}
+                </div>
+              </motion.div>
+            );
+          }
+
+          return (
+            <motion.div
+              key={msg.id}
+              {...appear(i < 3 ? 0.2 + i * 0.3 : 0)}
+              className={`flex ${msg.from === "buyer" ? "justify-end" : "justify-start"}`}
             >
-              <p className="font-medium leading-relaxed">{msg.text}</p>
-              <p
-                className={`mt-1 flex items-center gap-1 text-[11px] font-medium ${
-                  msg.from === "buyer" ? "text-white/70" : "text-faint"
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-soft ${
+                  msg.from === "buyer"
+                    ? "rounded-bl-md bg-gradient-to-l from-primary to-primary-dark text-white"
+                    : "rounded-br-md bg-white text-ink ring-1 ring-line/60"
                 }`}
               >
-                {msg.time}
-                {msg.from === "buyer" && (
-                  <CheckCheck
-                    className={`size-3.5 ${msg.read ? "text-green-300" : "text-white/50"}`}
-                  />
-                )}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+                <p className="font-medium leading-relaxed">{msg.text}</p>
+                <p
+                  className={`mt-1 flex items-center gap-1 text-[11px] font-medium ${
+                    msg.from === "buyer" ? "text-white/70" : "text-faint"
+                  }`}
+                >
+                  {msg.time}
+                  {msg.from === "buyer" && (
+                    <CheckCheck
+                      className={`size-3.5 ${msg.read ? "text-green-300" : "text-white/50"}`}
+                    />
+                  )}
+                </p>
+              </div>
+            </motion.div>
+          );
+        })}
 
         {/* تدخل النظام الذكي — اتفاق الشوفة الحرة */}
         <motion.div {...appear(1.3)} className="py-1">
