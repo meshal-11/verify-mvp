@@ -30,7 +30,9 @@ export default async function SearchResultsPage({
   const parsed = parseQuery(q).map((f) => f.value);
   const chips = parsed.length > 0 ? parsed : DEFAULT_SEARCH_FILTERS;
 
-  const cards = await getSearchResults();
+  const cards = await getSearchResults(q);
+  // عدّاد النتائج: فعلي عند التصفية بالاستعلام، وإلا إجمالي النموذج الأولي
+  const resultsCount = q.trim() ? cards.length : SEARCH_RESULTS_TOTAL;
 
   return (
     <div className="min-h-dvh">
@@ -84,7 +86,7 @@ export default async function SearchResultsPage({
           {/* عدّاد النتائج */}
           <Reveal delay={0.1}>
             <p className="mt-5 mb-4 text-sm font-bold text-muted">
-              <span className="text-ink tabular-nums">{SEARCH_RESULTS_TOTAL} نتائج</span>{" "}
+              <span className="text-ink tabular-nums">{resultsCount} نتائج</span>{" "}
               — مرتبة حسب الأنسب لبحثك
             </p>
           </Reveal>

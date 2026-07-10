@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Bell, ChevronLeft } from "lucide-react";
 import type { SimilarListing } from "@/lib/types";
@@ -38,10 +39,20 @@ export default function SimilarListings({ items }: { items: SimilarListing[] }) 
               className="group flex gap-3 rounded-2xl p-2 ring-1 ring-transparent transition-all hover:bg-page/70 hover:ring-line/70"
             >
               <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl ring-1 ring-line/60">
-                <CarPlaceholder
-                  variant={item.paletteIndex}
-                  className="size-full transition-transform duration-500 group-hover:scale-[1.06]"
-                />
+                {item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    sizes="7rem"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+                  />
+                ) : (
+                  <CarPlaceholder
+                    variant={item.paletteIndex}
+                    className="size-full transition-transform duration-500 group-hover:scale-[1.06]"
+                  />
+                )}
                 {item.mawjaz && (
                   <span className="absolute top-1.5 right-1.5 rounded-full bg-white/85 backdrop-blur">
                     <BadgeMawjaz compact />

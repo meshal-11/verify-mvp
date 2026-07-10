@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { Eye, Heart, MessageSquareText, TrendingUp } from "lucide-react";
 import Reveal from "./reveal";
-import CarPlaceholder from "./car-placeholder";
 import BadgeMawjaz from "./badge-mawjaz";
 
 /** عدّاد تصاعدي ناعم للإحصاءات */
@@ -55,9 +55,12 @@ export default function MyAd() {
           className="group mt-5 block overflow-hidden rounded-3xl bg-white shadow-soft ring-1 ring-line/60 transition-all hover:-translate-y-0.5 hover:shadow-lift"
         >
           <div className="relative aspect-[16/8] overflow-hidden">
-            <CarPlaceholder
-              variant={0}
-              className="size-full transition-transform duration-700 group-hover:scale-[1.05]"
+            <Image
+              src="/landcruiser.jpeg"
+              alt="تويوتا لاندكروزر GXR 2021 — فل كامل"
+              fill
+              sizes="(min-width: 640px) 36rem, 100vw"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
             />
             <div className="absolute top-3 right-3 rounded-full bg-white/85 shadow-soft backdrop-blur-xl">
               <BadgeMawjaz label="بدون حوادث كبرى" compact />

@@ -70,6 +70,8 @@ export default async function ListingPage({
               <Gallery
                 imageCount={listing.imageCount}
                 mawjazLabel={listing.mawjaz.label}
+                image={listing.image}
+                mawjaz={listing.mawjaz.passed}
               />
             </Reveal>
 

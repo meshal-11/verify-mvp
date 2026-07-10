@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { BadgeCheck, ChevronLeft, Crosshair } from "lucide-react";
 import type { SearchResultCard } from "@/lib/types";
@@ -31,10 +32,20 @@ export default function CarCard({ card }: { card: SearchResultCard }) {
       >
         {/* الصورة + شارتا الثقة العلويتان */}
         <div className="relative aspect-[16/9] overflow-hidden">
-          <CarPlaceholder
-            variant={card.paletteIndex}
-            className="size-full transition-transform duration-700 ease-out group-hover:scale-[1.06]"
-          />
+          {card.image ? (
+            <Image
+              src={card.image}
+              alt={card.title}
+              fill
+              sizes="(min-width: 640px) 50vw, 100vw"
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+            />
+          ) : (
+            <CarPlaceholder
+              variant={card.paletteIndex}
+              className="size-full transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+            />
+          )}
           {/* تدرج سفلي يمنح الصورة عمقاً */}
           <div
             aria-hidden

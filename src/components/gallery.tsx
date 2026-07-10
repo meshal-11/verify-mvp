@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, ChevronLeft, Expand, Heart } from "lucide-react";
-import CarPlaceholder from "./car-placeholder";
 import BadgeMawjaz from "./badge-mawjaz";
 
 const angles = [
@@ -19,13 +19,20 @@ const angles = [
 export default function Gallery({
   imageCount,
   mawjazLabel,
+  image = "/landcruiser.jpeg",
+  mawjaz = true,
 }: {
   imageCount: number;
   mawjazLabel: string;
+  /** صورة الإعلان الحقيقية — تُكرَّر لكل الزوايا إلى حين ربط صور متعددة عبر Supabase */
+  image?: string;
+  /** هل اجتاز الإعلان فحص موجز — تُخفى الشارة إن لم يجتز */
+  mawjaz?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [liked, setLiked] = useState(false);
   const count = Math.min(imageCount, angles.length);
+  const images = Array.from({ length: count }, () => image);
 
   const go = (dir: 1 | -1) =>
     setIndex((i) => (i + dir + count) % count);
@@ -43,14 +50,23 @@ export default function Gallery({
             transition={{ duration: 0.35, ease: "easeOut" }}
             className="absolute inset-0"
           >
-            <CarPlaceholder variant={index} className="size-full" />
+            <Image
+              src={images[index]}
+              alt={angles[index]}
+              fill
+              priority={index === 0}
+              sizes="(min-width: 1024px) 66vw, 100vw"
+              className="w-full h-full object-cover"
+            />
           </motion.div>
         </AnimatePresence>
 
-        {/* شارة موجز — زجاجية فوق الصورة */}
-        <div className="absolute top-4 right-4 rounded-full bg-white/80 shadow-soft backdrop-blur-xl">
-          <BadgeMawjaz label={mawjazLabel} />
-        </div>
+        {/* شارة موجز — زجاجية فوق الصورة (تظهر فقط للإعلانات المجتازة) */}
+        {mawjaz && (
+          <div className="absolute top-4 right-4 rounded-full bg-white/80 shadow-soft backdrop-blur-xl">
+            <BadgeMawjaz label={mawjazLabel} />
+          </div>
+        )}
 
         {/* مفضلة + توسيع */}
         <div className="absolute top-4 left-4 flex gap-2">
@@ -113,7 +129,13 @@ export default function Gallery({
             onClick={() => setIndex(i)}
             className="relative aspect-[4/3] w-24 shrink-0 cursor-pointer overflow-hidden rounded-xl ring-1 ring-line/60 transition-transform hover:scale-[1.04]"
           >
-            <CarPlaceholder variant={i} className="size-full" />
+            <Image
+              src={images[i]}
+              alt=""
+              fill
+              sizes="6rem"
+              className="w-full h-full object-cover"
+            />
             {index === i && (
               <motion.span
                 layoutId="thumb-ring"

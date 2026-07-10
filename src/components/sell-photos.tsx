@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
@@ -11,7 +12,6 @@ import {
   ScanSearch,
   Sparkles,
 } from "lucide-react";
-import CarPlaceholder from "./car-placeholder";
 import Reveal from "./reveal";
 
 /** خطوات التعرّف — الشاشة 2 حرفياً */
@@ -76,16 +76,34 @@ export default function SellPhotos() {
           <div className="mt-4 grid grid-cols-3 gap-2.5">
             {/* الغلاف */}
             <div className="relative col-span-2 row-span-2 aspect-auto overflow-hidden rounded-2xl ring-1 ring-line/60">
-              <CarPlaceholder variant={0} className="size-full" />
+              <Image
+                src="/landcruiser.jpeg"
+                alt="صورة غلاف السيارة"
+                fill
+                sizes="(min-width: 640px) 24rem, 66vw"
+                className="w-full h-full object-cover"
+              />
               <span className="absolute top-2.5 right-2.5 rounded-full bg-gold px-3 py-1 text-[11px] font-black text-[#3d2e12] shadow-gold">
                 الغلاف
               </span>
             </div>
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl ring-1 ring-line/60">
-              <CarPlaceholder variant={3} className="size-full" />
+              <Image
+                src="/landcruiser.jpeg"
+                alt="صورة السيارة"
+                fill
+                sizes="(min-width: 640px) 12rem, 33vw"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl ring-1 ring-line/60">
-              <CarPlaceholder variant={4} className="size-full" />
+              <Image
+                src="/landcruiser.jpeg"
+                alt="صورة السيارة"
+                fill
+                sizes="(min-width: 640px) 12rem, 33vw"
+                className="w-full h-full object-cover"
+              />
             </div>
             <button className="grid aspect-[4/3] cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-line bg-white text-faint transition-colors hover:border-primary/50 hover:text-primary">
               <Camera className="size-6" strokeWidth={1.6} />

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   BadgeCheck,
@@ -11,7 +12,6 @@ import {
   SendHorizontal,
   Sparkles,
 } from "lucide-react";
-import CarPlaceholder from "./car-placeholder";
 import BadgeMawjaz from "./badge-mawjaz";
 import { VerifyMark } from "./verify-logo";
 
@@ -26,6 +26,7 @@ const PICKS = [
     reasonTone: "green" as const,
     trust: "بائع موثوق 96٪",
     palette: 0,
+    image: "/landcruiser.jpeg",
   },
   {
     href: "/car/toyota-land-cruiser-vxr-2021",
@@ -36,6 +37,7 @@ const PICKS = [
     reasonTone: "primary" as const,
     trust: "بائع موثوق 91٪",
     palette: 1,
+    image: "/landcruiser.jpeg",
   },
 ];
 
@@ -143,9 +145,12 @@ export default function AssistantBuyer() {
                 }`}
               >
                 <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-2xl ring-1 ring-line/60">
-                  <CarPlaceholder
-                    variant={pick.palette}
-                    className="size-full transition-transform duration-700 group-hover:scale-[1.06]"
+                  <Image
+                    src={pick.image}
+                    alt={pick.title}
+                    fill
+                    sizes="7rem"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
                   />
                 </div>
                 <div className="min-w-0 flex-1 py-0.5">

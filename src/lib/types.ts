@@ -51,6 +51,8 @@ export interface CarListing {
   topBid: number | null;
   interestedBuyers: number;
   imageCount: number;
+  /** مسار صورة الإعلان الحقيقية من public */
+  image: string;
   specs: CarSpecs;
   defects: DisclosedDefect[];
   mawjaz: MawjazReport;
@@ -69,6 +71,10 @@ export interface SearchResultCard {
   mawjaz: boolean;
   trustScore: number;
   paletteIndex: number;
+  /** مسار صورة حقيقية من public — احتياطي CarPlaceholder إن غابت */
+  image?: string;
+  /** الموديل للتصفية حسب استعلام البحث (يحاكي عمود listings.model) */
+  model?: string;
 }
 
 export interface SimilarListing {
@@ -78,4 +84,5 @@ export interface SimilarListing {
   meta: string;
   mawjaz: boolean;
   paletteIndex: number;
+  image?: string;
 }

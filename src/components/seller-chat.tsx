@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   TriangleAlert,
 } from "lucide-react";
+import { containsPhoneNumber } from "@/lib/chat-guards";
 
 /** الردود السريعة — الشاشة 5.1 حرفياً */
 const QUICK_REPLIES = ["نكمل هنا بأمان", "وين مكان المعاينة؟", "تبي تحجز فحص؟"];
@@ -23,6 +24,8 @@ interface Bubble {
   text: string;
   time: string;
   read?: boolean;
+  /** رسالة محظورة تلقائياً (رقم تواصل) — تُعرض كبطاقة تحذير بدل الفقاعة */
+  kind?: "text" | "blocked";
 }
 
 /** افتتاحية الشاشة 5 حرفياً */
@@ -77,9 +80,18 @@ export default function SellerChat() {
       hour: "numeric",
       minute: "2-digit",
     });
+    // حظر مشاركة أرقام التواصل — لا تُضاف الرسالة، تظهر بطاقة تحذير بدلها
+    if (containsPhoneNumber(t)) {
+      setMessages((m) => [
+        ...m,
+        { id: Date.now(), from: "seller", kind: "blocked", text: t, time: now },
+      ]);
+      setDraft("");
+      return;
+    }
     setMessages((m) => [
       ...m,
-      { id: Date.now(), from: "seller", text: t, time: now, read: false },
+      { id: Date.now(), from: "seller", kind: "text", text: t, time: now, read: false },
     ]);
     setDraft("");
   };
@@ -300,7 +312,23 @@ export default function SellerChat() {
           )}
         </AnimatePresence>
 
-        {messages.map((m) => bubble(m, 0))}
+        {messages.map((m) =>
+          m.kind === "blocked" ? (
+            <motion.div key={m.id} {...appear(0)}>
+              <div className="mx-auto max-w-md rounded-2xl bg-danger-tint p-4 text-center ring-1 ring-danger/25">
+                <p className="flex items-center justify-center gap-1.5 text-sm font-black text-danger">
+                  <Ban className="size-4" />
+                  تم حظر هذه الرسالة تلقائياً
+                </p>
+                <p className="mt-1.5 text-xs font-medium leading-relaxed text-danger/85">
+                  يُمنع مشاركة أرقام التواصل للحفاظ على أمانك داخل منصة Verify.
+                </p>
+              </div>
+            </motion.div>
+          ) : (
+            bubble(m, 0)
+          )
+        )}
       </div>
 
       {/* الردود السريعة + الإدخال */}

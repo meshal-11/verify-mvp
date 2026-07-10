@@ -1,4 +1,5 @@
 import type { CarListing, SearchResultCard, SimilarListing } from "./types";
+import { parseQuery } from "./search-parser";
 
 /**
  * بيانات وهمية للـ MVP — تُستبدل لاحقاً باستعلامات Supabase
@@ -22,6 +23,7 @@ const listings: Record<string, CarListing> = {
     topBid: 150000,
     interestedBuyers: 3,
     imageCount: 6,
+    image: "/landcruiser.jpeg",
     specs: {
       mileageKm: 78000,
       transmission: "أوتوماتيك",
@@ -68,6 +70,7 @@ const listings: Record<string, CarListing> = {
     topBid: null,
     interestedBuyers: 1,
     imageCount: 6,
+    image: "/landcruiser.jpeg",
     specs: {
       mileageKm: 92500,
       transmission: "أوتوماتيك",
@@ -93,6 +96,48 @@ const listings: Record<string, CarListing> = {
     },
     tags: ["حراج السيارات", "تويوتا", "لاندكروزر", "لاندكروزر 2021"],
   },
+  "toyota-camry-se-2023": {
+    id: "toyota-camry-se-2023",
+    title: "تويوتا كامري SE 2023 — سعودي",
+    make: "تويوتا",
+    model: "كامري",
+    trim: "SE سعودي",
+    year: 2023,
+    city: "جدة",
+    district: "حي الروضة",
+    postedAgo: "قبل 10 دقائق",
+    views: 486,
+    price: 98500,
+    negotiable: true,
+    topBid: null,
+    interestedBuyers: 2,
+    imageCount: 6,
+    image: "/camry.jpeg",
+    specs: {
+      mileageKm: 31000,
+      transmission: "أوتوماتيك",
+      engine: "4 سلندر — 2.5L",
+      fuel: "بنزين",
+      color: "أبيض",
+      condition: "مستعملة",
+    },
+    defects: [],
+    mawjaz: {
+      passed: false,
+      label: "بانتظار الفحص المبدئي",
+      detail:
+        "لم يُطلب فحص موجز المجاني بعد لهذا الإعلان — اطلب الفحص المعتمد لتوثيق الحالة",
+    },
+    seller: {
+      id: "al-tamimi",
+      name: "م. التميمي",
+      trustScore: 89,
+      memberSince: 2021,
+      completedDeals: 9,
+      responseNote: "يرد خلال ساعتين غالباً",
+    },
+    tags: ["حراج السيارات", "تويوتا", "كامري", "كامري 2023"],
+  },
 };
 
 /**
@@ -110,6 +155,8 @@ const searchResults: SearchResultCard[] = [
     mawjaz: true,
     trustScore: 96,
     paletteIndex: 0,
+    image: "/landcruiser.jpeg",
+    model: "لاندكروزر",
   },
   {
     id: "result-vxr",
@@ -121,11 +168,40 @@ const searchResults: SearchResultCard[] = [
     mawjaz: true,
     trustScore: 91,
     paletteIndex: 1,
+    image: "/landcruiser.jpeg",
+    model: "لاندكروزر",
+  },
+  {
+    id: "result-camry",
+    listingId: "toyota-camry-se-2023",
+    title: "تويوتا كامري SE 2023 — سعودي",
+    meta: "31,000 كم · أوتوماتيك · جدة — الروضة",
+    price: 98500,
+    matchPercent: 82,
+    mawjaz: false,
+    trustScore: 89,
+    paletteIndex: 2,
+    image: "/camry.jpeg",
+    model: "كامري",
   },
 ];
 
-export async function getSearchResults(): Promise<SearchResultCard[]> {
-  return searchResults;
+/**
+ * نتائج البحث مصفّاة حسب الاستعلام — يحاكي `.ilike("model", ...)` في Supabase.
+ * بدون استعلام (أو استعلام لا يذكر موديلاً) تُعاد كل النتائج كما في النموذج الأولي.
+ */
+export async function getSearchResults(
+  query?: string
+): Promise<SearchResultCard[]> {
+  const q = query?.trim();
+  if (!q) return searchResults;
+
+  const filters = parseQuery(q);
+  const model = filters.find((f) => f.key === "model")?.value;
+  if (!model) return searchResults;
+
+  const matched = searchResults.filter((c) => c.model === model);
+  return matched.length > 0 ? matched : searchResults;
 }
 
 /** إجمالي النتائج كما في النموذج الأولي («8 نتائج») */
@@ -148,6 +224,7 @@ export interface HomeListing {
   price: number;
   mawjaz: boolean;
   paletteIndex: number;
+  image?: string;
 }
 
 export const homeListings: HomeListing[] = [
@@ -159,15 +236,17 @@ export const homeListings: HomeListing[] = [
     price: 155000,
     mawjaz: true,
     paletteIndex: 0,
+    image: "/landcruiser.jpeg",
   },
   {
     id: "home-camry",
-    href: "#",
+    href: "/car/toyota-camry-se-2023",
     title: "كامري SE 2023 سعودي",
     meta: "جدة · قبل 10 دقائق · م. التميمي",
     price: 98500,
     mawjaz: false,
     paletteIndex: 2,
+    image: "/camry.jpeg",
   },
 ];
 
@@ -179,6 +258,7 @@ const similar: SimilarListing[] = [
     meta: "92,500 كم · الرياض — العارض",
     mawjaz: true,
     paletteIndex: 1,
+    image: "/landcruiser.jpeg",
   },
   {
     id: "lc-gxr-2020",
@@ -187,6 +267,7 @@ const similar: SimilarListing[] = [
     meta: "110,000 كم · الرياض — الملقا",
     mawjaz: false,
     paletteIndex: 2,
+    image: "/landcruiser.jpeg",
   },
   {
     id: "lc-gx-2021",
@@ -195,6 +276,7 @@ const similar: SimilarListing[] = [
     meta: "64,000 كم · الخرج",
     mawjaz: true,
     paletteIndex: 3,
+    image: "/landcruiser.jpeg",
   },
   {
     id: "lc-vxs-2020",
@@ -203,6 +285,7 @@ const similar: SimilarListing[] = [
     meta: "88,300 كم · الرياض — النسيم",
     mawjaz: false,
     paletteIndex: 4,
+    image: "/landcruiser.jpeg",
   },
 ];
 

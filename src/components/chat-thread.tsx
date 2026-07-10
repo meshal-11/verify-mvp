@@ -17,6 +17,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import InspectionModal from "./inspection-modal";
+import { containsPhoneNumber, extractBidAmount } from "@/lib/chat-guards";
 
 interface ChatMessage {
   id: number;
@@ -55,25 +56,6 @@ const INITIAL_MESSAGES: ChatMessage[] = [
     read: true,
   },
 ];
-
-/** يكتشف أرقام جوال سعودية مكتوبة بأي صيغة (مسافات/شرطات/رمز الدولة) */
-function containsPhoneNumber(text: string): boolean {
-  const normalized = text.replace(/[\s-]/g, "");
-  return /(?:\+?9665\d{8}|05\d{8}|5\d{8})/.test(normalized);
-}
-
-/** يكتشف نية السوم: كلمة "سوم" أو رقم كبير ضمن الرسالة */
-function extractBidAmount(text: string): number | null {
-  const numberMatches = text.match(/\d[\d,]*/g);
-  if (!numberMatches) return null;
-  const amounts = numberMatches
-    .map((n) => parseInt(n.replace(/,/g, ""), 10))
-    .filter((n) => !Number.isNaN(n));
-  if (amounts.length === 0) return null;
-  const max = Math.max(...amounts);
-  const hasBidWord = /سوم/.test(text);
-  return hasBidWord || max >= 1000 ? max : null;
-}
 
 /**
  * الشاشة 10 — المحادثة + الشوفة الحرة

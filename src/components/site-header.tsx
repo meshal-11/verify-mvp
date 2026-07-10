@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Armchair,
@@ -34,6 +35,16 @@ const navItems = [
 /** الهيكل المألوف لحراج: شريط أقسام أبيض + شريط كحلي بالشعار — بروح فاخرة */
 export default function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    // بنص → نتائج مباشرة؛ فارغ → شاشة البحث الذكي
+    router.push(q ? `/search/results?q=${encodeURIComponent(q)}` : "/search");
+  };
+
   const isActive = (href: string) =>
     href !== "#" &&
     (href === "/" ? pathname === "/" : pathname.startsWith(href));
@@ -75,21 +86,35 @@ export default function SiteHeader() {
             <VerifyLogo />
           </Link>
 
-          {/* بحث سريع — يقودك للبحث الذكي (الشاشة 7) */}
+          {/* بحث سريع — يقودك لنتائج البحث الذكي (الشاشة 8) */}
           <div className="hidden flex-1 max-w-xl md:block">
-            <Link
-              href="/search"
-              className="group flex items-center gap-2.5 rounded-full bg-white/10 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur transition-all hover:bg-white/20 focus-visible:ring-white"
+            <form
+              onSubmit={onSearch}
+              className="group flex items-center gap-2.5 rounded-full bg-white/10 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur transition-all hover:bg-white/20 focus-within:ring-white"
             >
-              <Search className="size-4 text-white/70" />
-              <span className="w-full text-sm text-white/60">
-                ابحث في Verify…
-              </span>
-              <span className="hidden shrink-0 items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-white/80 lg:flex">
+              <button
+                type="submit"
+                aria-label="ابحث"
+                className="grid shrink-0 cursor-pointer place-items-center text-white/70 transition-colors hover:text-white"
+              >
+                <Search className="size-4" />
+              </button>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="ابحث في Verify…"
+                aria-label="ابحث في Verify"
+                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/60"
+              />
+              <button
+                type="submit"
+                className="hidden shrink-0 cursor-pointer items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-white/80 transition-colors hover:bg-white/25 lg:flex"
+              >
                 <Sparkles className="size-3" />
                 بحث ذكي
-              </span>
-            </Link>
+              </button>
+            </form>
           </div>
 
           {/* أدوات */}

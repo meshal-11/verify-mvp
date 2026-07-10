@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Armchair,
   Briefcase,
@@ -135,10 +136,20 @@ export default function HomePage() {
                   className="group flex gap-4 rounded-3xl bg-white p-3 shadow-soft ring-1 ring-line/60 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift hover:ring-primary/30"
                 >
                   <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-2xl ring-1 ring-line/60 sm:w-40">
-                    <CarPlaceholder
-                      variant={item.paletteIndex}
-                      className="size-full transition-transform duration-700 group-hover:scale-[1.06]"
-                    />
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        sizes="(min-width: 640px) 10rem, 8rem"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+                      />
+                    ) : (
+                      <CarPlaceholder
+                        variant={item.paletteIndex}
+                        className="size-full transition-transform duration-700 group-hover:scale-[1.06]"
+                      />
+                    )}
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col justify-center py-1">
                     <div className="flex flex-wrap items-center gap-2">
