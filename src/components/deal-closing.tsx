@@ -178,7 +178,7 @@ export default function DealClosing() {
             <div className="rounded-2xl bg-primary/5 p-4 ring-1 ring-primary/15">
               <p className="flex items-center gap-2 text-sm font-extrabold text-primary-dark">
                 <Building2 className="size-4" />
-                إلى حراج — عمولة المنصة
+                إلى Verify — عمولة المنصة
               </p>
               <p className="mt-2 text-2xl font-black text-primary-dark tabular-nums">
                 300 <span className="text-xs font-bold">ريال</span>

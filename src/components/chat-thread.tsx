@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import InspectionModal from "./inspection-modal";
 import { containsPhoneNumber, extractBidAmount } from "@/lib/chat-guards";
+import { saveTopBid, saveIncomingBid } from "@/lib/bid-store";
 
 interface ChatMessage {
   id: number;
@@ -102,6 +103,8 @@ export default function ChatThread() {
     }
 
     const bidAmount = extractBidAmount(text);
+    // المشتري وضع سومة → ترسلها لشاشة البائع (seller-chat) لتظهر في بطاقته التفاعلية
+    if (bidAmount) saveIncomingBid(bidAmount);
     setMessages((m) => [
       ...m,
       { id: Date.now(), kind: "text", from: "buyer", text, time: now, read: false },
@@ -122,6 +125,11 @@ export default function ChatThread() {
   };
 
   const setBidStatus = (id: number, status: "accepted" | "declined") => {
+    // اعتماد السومة يحدّث «أعلى سومة» في صفحة الإعلان (my-ad) عبر localStorage
+    if (status === "accepted") {
+      const bid = messages.find((msg) => msg.id === id);
+      if (bid?.bidAmount) saveTopBid(bid.bidAmount);
+    }
     setMessages((m) =>
       m.map((msg) => (msg.id === id ? { ...msg, bidStatus: status } : msg))
     );

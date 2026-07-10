@@ -52,7 +52,7 @@ const listings: Record<string, CarListing> = {
       completedDeals: 42,
       responseNote: "يرد خلال ساعة غالباً",
     },
-    tags: ["حراج السيارات", "تويوتا", "لاندكروزر", "لاندكروزر 2021"],
+    tags: ["Verify السيارات", "تويوتا", "لاندكروزر", "لاندكروزر 2021"],
   },
   "toyota-land-cruiser-vxr-2021": {
     id: "toyota-land-cruiser-vxr-2021",
@@ -94,7 +94,7 @@ const listings: Record<string, CarListing> = {
       completedDeals: 17,
       responseNote: "يرد خلال ساعتين غالباً",
     },
-    tags: ["حراج السيارات", "تويوتا", "لاندكروزر", "لاندكروزر 2021"],
+    tags: ["Verify السيارات", "تويوتا", "لاندكروزر", "لاندكروزر 2021"],
   },
   "toyota-camry-se-2023": {
     id: "toyota-camry-se-2023",
@@ -136,7 +136,7 @@ const listings: Record<string, CarListing> = {
       completedDeals: 9,
       responseNote: "يرد خلال ساعتين غالباً",
     },
-    tags: ["حراج السيارات", "تويوتا", "كامري", "كامري 2023"],
+    tags: ["Verify السيارات", "تويوتا", "كامري", "كامري 2023"],
   },
 };
 

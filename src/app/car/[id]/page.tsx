@@ -36,7 +36,7 @@ export default async function ListingPage({
 
       <main className="mx-auto max-w-7xl px-4 pb-28 md:pb-12">
         <Breadcrumb
-          items={["حراج السيارات", listing.make, listing.model, `${listing.model} ${listing.year}`]}
+          items={["Verify السيارات", listing.make, listing.model, `${listing.model} ${listing.year}`]}
         />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">

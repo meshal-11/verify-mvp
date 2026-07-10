@@ -7,6 +7,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Eye, Heart, MessageSquareText, TrendingUp } from "lucide-react";
 import Reveal from "./reveal";
 import BadgeMawjaz from "./badge-mawjaz";
+import { formatPrice } from "@/lib/data";
+import { readTopBid, TOP_BID_EVENT } from "@/lib/bid-store";
 
 /** عدّاد تصاعدي ناعم للإحصاءات */
 function CountUp({ to }: { to: number }) {
@@ -30,6 +32,21 @@ function CountUp({ to }: { to: number }) {
 
 /** الشاشة 4 — الإعلان بعد النشر (عرض البائع): مشاهدات + خانة أعلى سومة فارغة */
 export default function MyAd() {
+  // أعلى سومة تُحدَّث تلقائياً من المحادثات (chat / seller-chat) عبر localStorage
+  const [topBid, setTopBid] = useState<number | null>(null);
+  useEffect(() => {
+    const sync = () => setTopBid(readTopBid()?.amount ?? null);
+    sync();
+    window.addEventListener("storage", sync);
+    window.addEventListener(TOP_BID_EVENT, sync);
+    window.addEventListener("focus", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(TOP_BID_EVENT, sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
+
   const stats = [
     { label: "مشاهدة", value: 1248, icon: Eye, href: null },
     { label: "محادثة", value: 12, icon: MessageSquareText, href: "/seller-chat" },
@@ -142,9 +159,23 @@ export default function MyAd() {
               تُحدَّث تلقائياً من محادثاتك
             </p>
           </div>
-          <p className="text-4xl font-black text-faint" aria-label="لا سومات بعد">
-            —
-          </p>
+          {topBid !== null ? (
+            <motion.p
+              key={topBid}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 320, damping: 20 }}
+              className="text-3xl font-black text-green tabular-nums"
+              aria-label={`أعلى سومة ${topBid} ريال`}
+            >
+              {formatPrice(topBid)}{" "}
+              <span className="text-sm font-bold text-green-dark">ريال</span>
+            </motion.p>
+          ) : (
+            <p className="text-4xl font-black text-faint" aria-label="لا سومات بعد">
+              —
+            </p>
+          )}
         </section>
       </Reveal>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
@@ -14,6 +14,12 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { containsPhoneNumber } from "@/lib/chat-guards";
+import {
+  saveTopBid,
+  readIncomingBid,
+  clearIncomingBid,
+  INCOMING_BID_EVENT,
+} from "@/lib/bid-store";
 
 /** الردود السريعة — الشاشة 5.1 حرفياً */
 const QUICK_REPLIES = ["نكمل هنا بأمان", "وين مكان المعاينة؟", "تبي تحجز فحص؟"];
@@ -72,6 +78,27 @@ export default function SellerChat() {
   const [bidAccepted, setBidAccepted] = useState<null | boolean>(null);
   const [messages, setMessages] = useState<Bubble[]>([]);
   const [draft, setDraft] = useState("");
+
+  // السومة الواردة من المشتري (chat) — تُقرأ حيّاً عبر localStorage
+  const [incomingBid, setIncomingBid] = useState<number | null>(null);
+  // المبلغ المجمَّد بعد الموافقة — يبقي السرد التالي متسقاً حتى لو مُسحت الواردة
+  const [settledBid, setSettledBid] = useState<number | null>(null);
+  useEffect(() => {
+    const sync = () => setIncomingBid(readIncomingBid()?.amount ?? null);
+    sync();
+    window.addEventListener("storage", sync);
+    window.addEventListener(INCOMING_BID_EVENT, sync);
+    window.addEventListener("focus", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(INCOMING_BID_EVENT, sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
+
+  // قيمة السومة المعروضة: المجمَّدة ← سومة المشتري الواردة ← سومة النموذج 150,000
+  const bidValue = settledBid ?? incomingBid ?? 150000;
+  const bidK = Math.round(bidValue / 1000);
 
   const send = (text: string) => {
     const t = text.trim();
@@ -196,13 +223,16 @@ export default function SellerChat() {
         <motion.div {...appear(0.1)}>
           <p className="mx-auto flex w-fit items-center gap-1.5 rounded-full bg-gold-tint px-4 py-2 text-xs font-bold text-gold-deep ring-1 ring-gold/25">
             <ShieldAlert className="size-3.5" />
-            محادثة مراقبة من حراج لحماية الطرفين
+            محادثة مراقبة من Verify لحماية الطرفين
           </p>
         </motion.div>
 
         {bubble(OPENING[0], 0.35)}
         {bubble(OPENING[1], 0.6)}
-        {bubble(OPENING[2], 0.85)}
+        {bubble(
+          { ...OPENING[2], text: `طيب أنا جاد، أسوم بـ${bidK} ألف` },
+          0.85
+        )}
 
         {/* رصد السومة — تدخل النظام الذكي */}
         <motion.div {...appear(1.15)}>
@@ -216,14 +246,20 @@ export default function SellerChat() {
             <p className="mt-2.5 text-center font-bold leading-relaxed text-ink">
               سومة بقيمة{" "}
               <span className="font-black text-green tabular-nums">
-                150,000 ريال
+                {bidValue.toLocaleString("en-US")} ريال
               </span>{" "}
               — هل تقبلها كأعلى سومة؟
             </p>
             {bidAccepted === null ? (
               <div className="mt-4 grid grid-cols-2 gap-2.5">
                 <button
-                  onClick={() => setBidAccepted(true)}
+                  onClick={() => {
+                    setSettledBid(bidValue); // يجمّد المبلغ للسرد التالي
+                    setBidAccepted(true);
+                    // اعتماد البائع يحدّث «أعلى سومة» في my-ad ويُنهي السومة الواردة
+                    saveTopBid(bidValue);
+                    clearIncomingBid();
+                  }}
                   className="min-h-11 cursor-pointer rounded-xl bg-gradient-to-l from-primary to-primary-dark font-extrabold text-white shadow-lift transition-all hover:brightness-110 active:scale-[0.97]"
                 >
                   موافقة
@@ -258,7 +294,13 @@ export default function SellerChat() {
               animate={{ opacity: 1 }}
               className="space-y-3"
             >
-              {bubble(SELLER_FOLLOWUP, 0.3)}
+              {bubble(
+                {
+                  ...SELLER_FOLLOWUP,
+                  text: `قبلت سومتك ${bidK} — إذا حاب نمشي على خطوة الفحص المعتمد؟`,
+                },
+                0.3
+              )}
 
               {/* الشاشة 5.1 — التحذير الكامل قبل المحاولة */}
               <motion.div {...appear(0.7)}>
@@ -268,7 +310,7 @@ export default function SellerChat() {
                     التواصل خارج التطبيق ممنوع.
                   </p>
                   <p className="mt-1 text-xs font-medium leading-relaxed text-gold-deep/80">
-                    هذه المحادثة مراقبة من حراج لحماية خصوصية الطرفين وضمان حق
+                    هذه المحادثة مراقبة من Verify لحماية خصوصية الطرفين وضمان حق
                     البائع والمشتري والمنصة — أي اتفاق خارجها يُسقط الحماية
                     عنكما.
                   </p>
@@ -282,7 +324,13 @@ export default function SellerChat() {
                 اليوم 2:19 م
               </motion.p>
 
-              {bubble(BLOCK_ATTEMPT, 1.1)}
+              {bubble(
+                {
+                  ...BLOCK_ATTEMPT,
+                  text: `تمام اتفقنا على ${bidK} — بس أبي أطمّن أكثر، عطني رقمك نكمل واتساب أسرع`,
+                },
+                1.1
+              )}
 
               {/* الرسالة المحظورة */}
               {bubble(
@@ -300,7 +348,7 @@ export default function SellerChat() {
                   </p>
                   <p className="mt-1.5 text-xs font-medium leading-relaxed text-danger/85">
                     رصدنا محاولة مشاركة رقم للتواصل خارج التطبيق. يُمنع الاتفاق
-                    أو التحويل خارج حراج — لحمايتكما من الاحتيال وضمان حق
+                    أو التحويل خارج Verify — لحمايتكما من الاحتيال وضمان حق
                     البائع والمشتري والمنصة.
                   </p>
                   <p className="mt-2 text-xs font-bold text-muted">

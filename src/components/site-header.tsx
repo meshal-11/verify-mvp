@@ -23,7 +23,7 @@ import VerifyLogo from "./verify-logo";
 
 const navItems = [
   { label: "الرئيسية", icon: House, href: "/" },
-  { label: "حراج السيارات", icon: Car, href: "/car" },
+  { label: "Verify السيارات", icon: Car, href: "/car" },
   { label: "أجهزة", icon: Smartphone, href: "#" },
   { label: "مواشي وحيوانات وطيور", icon: PawPrint, href: "#" },
   { label: "أثاث", icon: Armchair, href: "#" },

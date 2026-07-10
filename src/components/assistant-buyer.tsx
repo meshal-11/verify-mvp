@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   CalendarCheck2,
   CheckCheck,
+  LoaderCircle,
   Scale,
   SendHorizontal,
   Sparkles,
@@ -41,6 +42,81 @@ const PICKS = [
   },
 ];
 
+/**
+ * توصيات المساعد التفاعلي — مبنية على بيانات الإعلانات الحقيقية (data.ts)
+ * لاندكروزر/جيب ← بطاقة اللاندكروزر · كامري ← بطاقة الكامري
+ */
+const REC = {
+  landcruiser: {
+    href: "/car/toyota-land-cruiser-gxr-2021",
+    title: "لاندكروزر GXR 2021 · 78,000 كم",
+    price: "155,000",
+    reason: "أقوى قيمة مقابل السعر",
+    trust: "بائع موثوق 96٪",
+    image: "/landcruiser.jpeg",
+  },
+  camry: {
+    href: "/car/toyota-camry-se-2023",
+    title: "كامري SE 2023 · 31,000 كم",
+    price: "98,500",
+    reason: "ممشى قليل · نظيفة",
+    trust: "بائع موثوق 89٪",
+    image: "/camry.jpeg",
+  },
+} as const;
+
+type Reco = (typeof REC)[keyof typeof REC];
+
+type Turn =
+  | { id: number; role: "user"; text: string }
+  | { id: number; role: "bot-text"; text: string }
+  | { id: number; role: "bot-card"; card: Reco };
+
+/** بطاقة توصية تفاعلية — تعيد استخدام نمط بطاقات الشاشة 18 حرفياً */
+function RecoCard({ card }: { card: Reco }) {
+  return (
+    <Link
+      href={card.href}
+      className="group flex gap-3 rounded-3xl bg-white p-3 shadow-soft ring-1 ring-gold/40 transition-all hover:-translate-y-0.5 hover:shadow-lift"
+    >
+      <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-2xl ring-1 ring-line/60">
+        <Image
+          src={card.image}
+          alt={card.title}
+          fill
+          sizes="7rem"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+        />
+      </div>
+      <div className="min-w-0 flex-1 py-0.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <BadgeMawjaz compact />
+          <span className="flex items-center gap-1 rounded-full bg-gradient-to-l from-gold to-gold-dark px-2.5 py-0.5 text-[10px] font-black text-[#3d2e12]">
+            <Sparkles className="size-3" />
+            اختيار المساعد
+          </span>
+        </div>
+        <p className="mt-1 truncate font-extrabold text-ink tabular-nums">
+          {card.title}
+        </p>
+        <p className="font-black text-green tabular-nums">
+          {card.price}{" "}
+          <span className="text-[10px] font-bold text-green-dark">ريال</span>
+        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-green-tint px-2 py-0.5 text-[10px] font-bold text-green-dark">
+            {card.reason}
+          </span>
+          <span className="flex items-center gap-0.5 text-[10px] font-bold text-muted">
+            <BadgeCheck className="size-3 text-primary" />
+            {card.trust}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 /** فقاعة كتابة المساعد */
 function AssistantBubble({
   children,
@@ -70,13 +146,54 @@ function AssistantBubble({
 export default function AssistantBuyer() {
   const reduce = useReducedMotion();
   const [draft, setDraft] = useState("");
-  const [sent, setSent] = useState<string[]>([]);
+  const [thread, setThread] = useState<Turn[]>([]);
+  const [typing, setTyping] = useState(false);
+  const idRef = useRef(1000);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const nextId = () => ++idRef.current;
+
+  // مؤشر «المساعد يحلل السوق…» يبقى ثم يظهر الرد — إبهار الإدارة
+  useEffect(() => {
+    requestAnimationFrame(() =>
+      scrollRef.current?.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: reduce ? "auto" : "smooth",
+      })
+    );
+  }, [thread, typing, reduce]);
+
+  const replyFor = (text: string): Turn => {
+    if (/لاندكروزر|لاند\s*كروزر|جيب/i.test(text))
+      return { id: nextId(), role: "bot-card", card: REC.landcruiser };
+    if (/كامري/i.test(text))
+      return { id: nextId(), role: "bot-card", card: REC.camry };
+    return {
+      id: nextId(),
+      role: "bot-text",
+      text: "جاري البحث في قاعدة بيانات Verify… هل تفضل تحديد ميزانية؟",
+    };
+  };
 
   const send = () => {
     const t = draft.trim();
-    if (!t) return;
-    setSent((s) => [...s, t]);
+    if (!t || typing) return;
+    setThread((prev) => [...prev, { id: nextId(), role: "user", text: t }]);
     setDraft("");
+    setTyping(true);
+    window.setTimeout(
+      () => {
+        setTyping(false);
+        setThread((prev) => [...prev, replyFor(t)]);
+      },
+      reduce ? 400 : 1500
+    );
+  };
+
+  const appear = {
+    initial: reduce ? false : { opacity: 0, y: 12, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    transition: { type: "spring" as const, stiffness: 300, damping: 26 },
   };
 
   return (
@@ -102,7 +219,10 @@ export default function AssistantBuyer() {
       </header>
 
       {/* المحادثة */}
-      <div className="flex-1 space-y-3 overflow-y-auto bg-page/60 p-4">
+      <div
+        ref={scrollRef}
+        className="flex-1 space-y-3 overflow-y-auto bg-page/60 p-4"
+      >
         {/* رسالة المشتري */}
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 16 }}
@@ -223,14 +343,46 @@ export default function AssistantBuyer() {
           </Link>
         </motion.div>
 
-        {/* رسائل المستخدم الجديدة */}
-        {sent.map((msg, i) => (
-          <div key={i} className="flex justify-end">
-            <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-gradient-to-l from-primary to-primary-dark px-4 py-2.5 text-white shadow-soft">
-              <p className="font-medium leading-relaxed">{msg}</p>
+        {/* المحادثة التفاعلية — رسائل المستخدم وردود المساعد الحيّة */}
+        {thread.map((turn) => {
+          if (turn.role === "user") {
+            return (
+              <motion.div key={turn.id} {...appear} className="flex justify-end">
+                <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-gradient-to-l from-primary to-primary-dark px-4 py-2.5 text-white shadow-soft">
+                  <p className="font-medium leading-relaxed">{turn.text}</p>
+                </div>
+              </motion.div>
+            );
+          }
+          if (turn.role === "bot-text") {
+            return (
+              <motion.div key={turn.id} {...appear} className="flex justify-start">
+                <div className="max-w-[88%] rounded-2xl rounded-br-md bg-white px-4 py-3 shadow-soft ring-1 ring-line/60">
+                  <p className="font-medium leading-relaxed text-ink">
+                    {turn.text}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          }
+          return (
+            <motion.div key={turn.id} {...appear} className="pe-6">
+              <RecoCard card={turn.card} />
+            </motion.div>
+          );
+        })}
+
+        {/* مؤشر التحليل */}
+        {typing && (
+          <motion.div {...appear} className="flex justify-start">
+            <div className="max-w-[88%] rounded-2xl rounded-br-md bg-white px-4 py-3 shadow-soft ring-1 ring-line/60">
+              <p className="flex items-center gap-2 font-bold leading-relaxed text-muted">
+                <LoaderCircle className="size-4 animate-spin text-primary" />
+                المساعد يحلل السوق…
+              </p>
             </div>
-          </div>
-        ))}
+          </motion.div>
+        )}
       </div>
 
       {/* الإدخال */}
@@ -246,7 +398,7 @@ export default function AssistantBuyer() {
         />
         <button
           onClick={send}
-          disabled={!draft.trim()}
+          disabled={!draft.trim() || typing}
           aria-label="إرسال"
           className="grid size-12 shrink-0 cursor-pointer place-items-center rounded-full bg-gradient-to-l from-primary to-primary-dark text-white shadow-lift transition-all hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
         >
